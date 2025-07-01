@@ -1,0 +1,2 @@
+Requirement already satisfied: torch in c:\users\anthony\anaconda3\envs\audiogan\lib\site-packages (1.13.1)
+Requirement already satisfied: typing-extensions in c:\users\anthony\anaconda3\envs\audiogan\lib\site-packages (from torch) (4.4.0)
