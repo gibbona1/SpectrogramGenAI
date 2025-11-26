@@ -44,7 +44,7 @@ else:
     val_df   = pd.DataFrame(specdata['test_df'], columns=['index0']+list(df_cols))#.iloc[:16]
 
 test_df  = get_neal_data('datasets/neal_labels_remapped.csv', test_path, pop_classes)#.iloc[:16]
-import code; code.interact(local=dict(globals(), **locals()))
+
 def redistribute_datasets(train_df, val_df, test_df, pop_classes):
     # Create copies to avoid modifying original dataframes
     train_df_new = train_df.copy()

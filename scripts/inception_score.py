@@ -1,13 +1,13 @@
 import os
 import sys
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchmetrics.image.inception import InceptionScore
 from PIL import Image
 from tqdm import tqdm
 
-class ImageDataset(torch.utils.data.Dataset):
+class ImageDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
         self.transform = transform

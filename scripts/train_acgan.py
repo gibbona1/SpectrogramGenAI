@@ -30,7 +30,7 @@ if nr_path:
     denoise_net.load_state_dict(torch.load(nr_path))
     denoise_net.to(device);
     denoise_net.eval();
-    
+
 output_dir = f'spec_gan2'
 if use_aind:
   output_dir = output_dir[:-1] + '_aind2'
@@ -289,4 +289,3 @@ for epoch in range(st_epochs + 1, n_epochs):
         torch.save(netD.state_dict(), '%s/netD_epoch_%d.pth' % (output_dir, epoch))
     clear_output(wait = True)
     results_df.to_csv(res_path, index=False)
-
