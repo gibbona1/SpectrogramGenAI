@@ -1,14 +1,15 @@
-import torch
 import time
-from helpers import load_ensemble, adjust_model
+
+import torch
+from helpers import adjust_model
 
 print(torch.__version__)
 
-input_data = torch.randn(16, 3, 256, 256) # Adjust input shape
+input_data = torch.randn(16, 3, 256, 256)  # Adjust input shape
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#model = load_ensemble(0, 27, device, knowledge_dist=False)
-model = adjust_model('resnet', 27)
-compiled_model = torch.compile(model, mode='reduce-overhead')
+# model = load_ensemble(0, 27, device, knowledge_dist=False)
+model = adjust_model("resnet", 27)
+compiled_model = torch.compile(model, mode="reduce-overhead")
 compiled_model = compiled_model.to(device)
 compiled_model.eval()
 input_data = input_data.to(device)

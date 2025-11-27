@@ -1,0 +1,14 @@
+[project]
+name = "spectrogramgenai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "E501", "E701"]   # use a list, not a comma-separated string
