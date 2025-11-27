@@ -28,7 +28,7 @@ class SpecDataset(Dataset):
         self.sav_folder = sav_folder
         if sav_folder and not os.path.exists(sav_folder):
           os.makedirs(sav_folder)
-    
+
     def __len__(self):
         return len(self.df)
 
@@ -50,13 +50,13 @@ class SpecDataset(Dataset):
             if(len(wav_sub)/sr != wav_len):
                 wav_sub = wav[int((int(row['end_time'])-wav_len)*sr):int(int(row['end_time'])*sr)]
             nfft = 512
-            
+
             spec = librosa.feature.melspectrogram(y=wav_sub, sr=sr, n_mels=256, hop_length=int(0.75*nfft))
             spec = librosa.power_to_db(spec, ref=np.max)[:,:256]
-            
+
             lab  = list(self.class_names).index(row.common_name)
             if self.sav_folder:
-                plt.imsave(sav_name, spec) 
+                plt.imsave(sav_name, spec)
                 return [], []
             spec = np.expand_dims(spec, 0) #channel first
 

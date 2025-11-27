@@ -35,7 +35,7 @@ class CustomModel(nn.Module):
         #    x = self.softmax(x)
         return x
 
-class EnsembleModel(nn.Module):   
+class EnsembleModel(nn.Module):
     def __init__(self, models, num_classes, device, weight_paths = None):
         super().__init__()
         self.models = nn.ModuleList(models)
@@ -54,7 +54,7 @@ class EnsembleModel(nn.Module):
                 self.input_transforms.append(lambda x: x)
         self.classifier = nn.Linear(num_classes*len(models), num_classes)
         self.relu = nn.ReLU()
-        
+
     def forward(self, x):
         outputs = [model(transform(x)) for model, transform in zip(self.models, self.input_transforms)]
         x_ens = self.relu(torch.cat(outputs, dim=1))  # Shape: (16, 108)
@@ -80,7 +80,7 @@ class EnsembleModel(nn.Module):
 #                self.input_transforms.append(lambda x: x.expand(-1, 3, -1, -1) if x.shape[1] == 1 else x)
 #            else:
 #                self.input_transforms.append(lambda x: x)
-#        
+#
 #        # Attention layer
 #        self.attention = nn.Sequential(
 #            nn.Linear(num_classes * len(models), len(models)),  # Project to per-model weights
@@ -92,11 +92,11 @@ class EnsembleModel(nn.Module):
 #    def forward(self, x):
 #        outputs = [model(transform(x)) for model, transform in zip(self.models, self.input_transforms)]
 #        x_ens = self.relu(torch.cat(outputs, dim=1))  # Shape: (16, 108)
-#        
+#
 #        # Apply attention
 #        attn_weights = self.attention(x_ens)  # Shape: (16, 4)
 #        attn_weights = attn_weights.unsqueeze(-1)  # Shape: (16, 4, 1)
-#        
+#
 #        # Split and weight
 #        x_ens_split = torch.split(x_ens, outputs[0].shape[1], dim=1)  # 4 x (16, 27)
 #        weighted_outputs = [w * o for w, o in zip(attn_weights.split(1, dim=1), x_ens_split)]  # 4 x (16, 16, 27)
@@ -105,7 +105,7 @@ class EnsembleModel(nn.Module):
 #        #import code; code.interact(local=dict(globals(), **locals()))
 #        out = self.classifier(x_ens_weighted) # Shape: (16, 27)
 #        return out
-    
+
 def freeze_layers(model):
     for param in model.parameters():
         param.requires_grad = False

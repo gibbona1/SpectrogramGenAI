@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-config = SimpleNamespace(    
+config = SimpleNamespace(
     run_name = "DDPM_conditional_VAE",
     seed = 42,
     epochs = 1,
@@ -65,7 +65,7 @@ def parse_args(config):
     parser.add_argument('--start_idx', type=int, default=config.start_idx, help='start index')
     parser.add_argument('--sav_denoise_path', type=str, default=config.sav_denoise_path, help='save denoise path')
     args = vars(parser.parse_args())
-    
+
     # update config with parsed args
     for k, v in args.items():
         setattr(config, k, v)
@@ -75,14 +75,14 @@ if __name__ == '__main__':
 
     ## seed everything
     set_seed(config.seed)
-    
+
     if not os.path.exists(config.img_folder):
         os.makedirs(config.img_folder)
-    
+
     if config.sav_denoise_path is not None:
       if not os.path.exists(config.sav_denoise_path):
         os.makedirs(config.sav_denoise_path)
-    
+
     class_names = sorted(os.listdir(os.path.join(config.dataset_path, config.train_folder)))
 
     diffuser = DiffusionVAE(config.noise_steps, img_size=config.img_size, num_classes=config.num_classes, sav_denoise_path = config.sav_denoise_path, class_names = class_names)
@@ -95,10 +95,10 @@ if __name__ == '__main__':
     #        os.rename(f"{config.img_folder}/gen_imgs_{class_names[i]}_{i}_{j}.png", f"{config.img_folder}/{class_names[i]}_gen_imgs_{i}_{j}.png")
           #if os.path.exists(f"{config.img_folder}/gen_imgs_class{i}_{i}_{j}.png"):
           #  os.rename(f"{config.img_folder}/gen_imgs_class{i}_{i}_{j}.png", f"{config.img_folder}/gen_imgs_{class_names[i]}_{i}_{j}.png")
-    
+
     diffuser.prepare(config)
     diffuser.load_model(config)
     for samp_i in range(config.start_idx, config.start_idx + config.num_samples):
       diffuser.gen_images(config.img_folder, samp_i)
-    
+
 print("done!")

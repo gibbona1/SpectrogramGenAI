@@ -36,10 +36,10 @@ rbind(train_df, val_df) |>
 get_neal_data <- function(lab_file, wav_path, classes) {
   # Read the CSV file
   df <- read.csv(lab_file)
-  
+
   # Copy 'class_label' to 'common_name'
   df$common_name <- df$class_label
-  
+
   # Filter based on file names present in the wav_path directory
   wav_files <- list.files(wav_path)
   df_sub <- df %>%
@@ -79,4 +79,3 @@ df$test <- paste0("\\color{seabornGreen}{\\rule{", round(2.5*df$test_counts/sum(
 colnames(df) <- gsub("_", " ", colnames(df))
 
 print(xtable(df), sanitize.text.function = identity)
-

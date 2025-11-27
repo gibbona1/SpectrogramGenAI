@@ -40,7 +40,7 @@ if nr_path:
 #make directory if it doesn't exist
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-    
+
 def normalize_cols(df, cols):
   for col in cols:
     df[col] = (df[col] - df[col].mean()) / df[col].std(ddof=0)
@@ -51,13 +51,13 @@ train_df, test_df = pd.DataFrame(specdata['train_df'], columns=df_cols), pd.Data
 
 if use_aind:
   aind_df = pd.read_csv(ai_path)
-  a_indices = ["ACI", "ADiv", "AEve", "BioA", "H", "Ht", "M", "NDSI", "NDSIAnthro", "NDSIBio", "AR"]       
+  a_indices = ["ACI", "ADiv", "AEve", "BioA", "H", "Ht", "M", "NDSI", "NDSIAnthro", "NDSIBio", "AR"]
 
-  train_df = train_df.merge(aind_df, 
-                            left_on=['file_name', 'begin_time', 'end_time'], 
+  train_df = train_df.merge(aind_df,
+                            left_on=['file_name', 'begin_time', 'end_time'],
                             right_on=['file_path', 'begin_time', 'end_time'])
   train_df = normalize_cols(train_df, a_indices)
-  
+
   n_ind = len(a_indices)
 else:
    n_ind = 11
@@ -124,10 +124,10 @@ if is_cuda:
     MSE.cuda()
     dis_label, aux_label = dis_label.cuda(), aux_label.cuda()
     eval_noise = eval_noise.cuda()
-  
+
 FloatTensor = torch.cuda.FloatTensor if is_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if is_cuda else torch.LongTensor
-  
+
 gen_labels = torch.zeros(batch_size,).type(LongTensor).to(device)
 z = torch.zeros(batch_size, N_Z+num_classes).type(FloatTensor).to(device)
 
@@ -161,24 +161,24 @@ for epoch in range(st_epochs + 1, n_epochs):
             real_cpu = real_cpu.to(device)
             real_c   = real_c.to(device)
         real_cpu = fast_resize_m1_1(real_cpu)
-        
+
         if nr_path:
           with torch.no_grad():
-            #random_mask = 
+            #random_mask =
             real_cpu = real_cpu - denoise_net(real_cpu)
             real_cpu = fast_resize_m1_1(real_cpu)
 
         #print(real_cpu.shape)
         real_imgs.copy_(real_cpu)
-        
+
         batch_size = real_cpu.size(0)
-        
+
         # Configure input
-        
+
         labels.copy_(real_c)
         if use_aind:
           a_ind.copy_(real_aind)
-        
+
         # -----------------
         #  Train Generator
         # -----------------
@@ -192,7 +192,7 @@ for epoch in range(st_epochs + 1, n_epochs):
         # Create one-hot encoded classes using PyTorch operations
         class_onehot = torch.zeros(batch_size, num_classes, device=device)
         class_onehot.scatter_(1, fake_c.unsqueeze(1), 1)
-        
+
         # Modify the noise tensor with the one-hot encoded class information
         # Please note the correction in the slicing to ensure it works as intended
         # We also need to ensure we're modifying the correct portion of the noise tensor
@@ -200,11 +200,11 @@ for epoch in range(st_epochs + 1, n_epochs):
         noise[:, :num_classes] = class_onehot
         if use_aind:
           noise[:, num_classes:(num_classes + n_ind) ] = a_ind
-        
-        
+
+
         z.copy_(noise)
         gen_labels.copy_(fake_c)
-        
+
         # Generate a batch of images
         gen_imgs = netG(z)
 
@@ -215,12 +215,12 @@ for epoch in range(st_epochs + 1, n_epochs):
         else:
           validity, pred_label = netD(gen_imgs)
           loss_G = 0.5 * (BCE(validity, valid) + NLL(pred_label, gen_labels))
-        
+
         loss_G.backward()
         optimizerG.step()
-        
-        
-        
+
+
+
         # ---------------------
         #  Train Discriminator
         # ---------------------
@@ -260,10 +260,10 @@ for epoch in range(st_epochs + 1, n_epochs):
         all_loss_D += loss_D.item()
         all_loss_G += loss_G.item()
         all_loss_A += d_acc
-        
+
         if i == 0 and epoch == 1:
           vutils.save_image(real_cpu, '%s/real_samples.png' % output_dir)
-    
+
         if i % 100 == 0 or i == len(train_loader) - 1:
             print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f Acc: %.4f'
             % (epoch, n_epochs, i, len(train_loader),
@@ -275,13 +275,13 @@ for epoch in range(st_epochs + 1, n_epochs):
                 '%s/fake_samples_epoch_%03d.png' % (output_dir, epoch)
             )
     # Save results to the DataFrame
-    row_df = pd.DataFrame({'Epoch': [epoch], 
-                           'Loss_D': [all_loss_D/len(train_loader)], 
+    row_df = pd.DataFrame({'Epoch': [epoch],
+                           'Loss_D': [all_loss_D/len(train_loader)],
                            'Loss_G': [all_loss_G/len(train_loader)],
                            'Loss_A': [all_loss_A/len(train_loader)]})
     if len(results_df) > 0:
         results_df = pd.concat([results_df, row_df], ignore_index=True)
-    else: 
+    else:
         results_df = row_df
     if epoch % 10 == 0 or epoch == n_epochs - 1:
         # do checkpointing

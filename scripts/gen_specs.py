@@ -11,7 +11,7 @@ test_path = 'datasets/neal_images'
 #lab_path = 'model_output_loc_merge.csv'
 #wav_path = 'Birdnet_conf_files'
 specdata = np.load('datasets/specdata.npz', allow_pickle=True)
-    
+
 #df_cols = ['index0'] + list(pd.read_csv(lab_path).columns)
 #train_df, test_df = pd.DataFrame(specdata['train_df'], columns=df_cols), pd.DataFrame(specdata['test_df'], columns=df_cols)
 

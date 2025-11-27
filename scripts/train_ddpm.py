@@ -26,7 +26,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
 
 
-config = SimpleNamespace(    
+config = SimpleNamespace(
     run_name = "DDPM_conditional_VAE",
     epochs = 100,
     noise_steps=1000,
@@ -64,7 +64,7 @@ def parse_args(config):
     parser.add_argument('--noise_steps', type=int, default=config.noise_steps, help='noise steps')
     parser.add_argument('--load_model', type=bool, default=False, help='load model')
     args = vars(parser.parse_args())
-    
+
     # update config with parsed args
     for k, v in args.items():
         setattr(config, k, v)

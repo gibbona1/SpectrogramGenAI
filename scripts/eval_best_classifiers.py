@@ -27,7 +27,7 @@ if large_data:
     df_cols  = largeinfo['columns']
     val_df   = pd.DataFrame(largeinfo['val_df'], columns=list(df_cols))
     val_df['formatted_filename'] = val_df.apply(
-        lambda row: f'{row["file_name"]}_{int(row["begin_time"])}_{int(row["begin_time"])}.png', 
+        lambda row: f'{row["file_name"]}_{int(row["begin_time"])}_{int(row["begin_time"])}.png',
         axis=1
     )
     val_df = val_df.loc[val_df['formatted_filename'].isin(os.listdir(im_path))]
@@ -43,7 +43,7 @@ batch_size = 16
 output_dir = 'eval_results'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-    
+
 model_name_dict = {
     'mobilenet': 'mobilenet_v2',
     'vgg': 'vgg16',

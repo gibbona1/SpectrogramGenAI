@@ -47,7 +47,7 @@ class EMA:
 class SelfAttention(nn.Module):
     def __init__(self, channels):
         super(SelfAttention, self).__init__()
-        self.channels = channels        
+        self.channels = channels
         self.mha = nn.MultiheadAttention(channels, 4, batch_first=True)
         self.ln = nn.LayerNorm([channels])
         self.ff_self = nn.Sequential(
@@ -199,7 +199,7 @@ class UNet(nn.Module):
         x = self.sa6(x)
         output = self.outc(x)
         return output
-    
+
     def forward(self, x, t):
         t = t.unsqueeze(-1)
         t = self.pos_encoding(t, self.time_dim)
@@ -223,33 +223,33 @@ class UNet_conditional(UNet):
 
 
 class Encoder(nn.Module):
-    
+
     def __init__(self, input_dim, hidden_dim, output_dim, kernel_size=(4, 4, 3, 1), stride=2):
         super(Encoder, self).__init__()
-        
+
         kernel_1, kernel_2, kernel_3, kernel_4 = kernel_size
-        
+
         self.strided_conv_1 = nn.Conv2d(input_dim, hidden_dim, kernel_1, stride, padding=1)
         self.strided_conv_2 = nn.Conv2d(hidden_dim, hidden_dim, kernel_2, stride, padding=1)
-        
+
         self.residual_conv_1 = nn.Conv2d(hidden_dim, hidden_dim, kernel_3, padding=1)
         self.residual_conv_2 = nn.Conv2d(hidden_dim, hidden_dim, kernel_4, padding=0)
-        
+
         self.proj = nn.Conv2d(hidden_dim, output_dim, kernel_size=1)
-        
+
     def forward(self, x):
-        
+
         x = self.strided_conv_1(x)
         x = self.strided_conv_2(x)
-        
+
         x = F.relu(x)
         y = self.residual_conv_1(x)
         y = y+x
-        
+
         x = F.relu(y)
         y = self.residual_conv_2(x)
         y = y+x
-        
+
         y = self.proj(y)
         return y
 
@@ -259,7 +259,7 @@ class VQEmbeddingEMA(nn.Module):
         self.commitment_cost = commitment_cost
         self.decay = decay
         self.epsilon = epsilon
-        
+
         init_bound = 1 / n_embeddings
         embedding = torch.Tensor(n_embeddings, embedding_dim)
         embedding.uniform_(-init_bound, init_bound)
@@ -277,24 +277,24 @@ class VQEmbeddingEMA(nn.Module):
         quantized = F.embedding(indices, self.embedding)
         quantized = quantized.view_as(x)
         return quantized, indices.view(x.size(0), x.size(1))
-    
+
     def retrieve_random_codebook(self, random_indices):
         quantized = F.embedding(random_indices, self.embedding)
         quantized = quantized.transpose(1, 3)
-        
+
         return quantized
 
     def forward(self, x):
         M, D = self.embedding.size()
         x_flat = x.detach().reshape(-1, D)
-        
+
         distances = (-torch.cdist(x_flat, self.embedding, p=2)) ** 2
 
         indices = torch.argmin(distances.float(), dim=-1)
         encodings = F.one_hot(indices, M).float()
         quantized = F.embedding(indices, self.embedding)
         quantized = quantized.view_as(x)
-        
+
         if self.training:
             self.ema_count = self.decay * self.ema_count + (1 - self.decay) * torch.sum(encodings, dim=0)
             n = torch.sum(self.ema_count)
@@ -314,37 +314,37 @@ class VQEmbeddingEMA(nn.Module):
         perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
 
         return quantized, commitment_loss, codebook_loss, perplexity
-    
+
 class Decoder(nn.Module):
-    
+
     def __init__(self, input_dim, hidden_dim, output_dim, kernel_sizes=(1, 3, 2, 2), stride=2):
         super(Decoder, self).__init__()
-        
+
         kernel_1, kernel_2, kernel_3, kernel_4 = kernel_sizes
-        
+
         self.in_proj = nn.Conv2d(input_dim, hidden_dim, kernel_size=1)
-        
+
         self.residual_conv_1 = nn.Conv2d(hidden_dim, hidden_dim, kernel_1, padding=0)
         self.residual_conv_2 = nn.Conv2d(hidden_dim, hidden_dim, kernel_2, padding=1)
-        
+
         self.strided_t_conv_1 = nn.ConvTranspose2d(hidden_dim, hidden_dim, kernel_3, stride, padding=0)
         self.strided_t_conv_2 = nn.ConvTranspose2d(hidden_dim, output_dim, kernel_4, stride, padding=0)
-        
+
     def forward(self, x):
 
         x = self.in_proj(x)
-        
+
         y = self.residual_conv_1(x)
         y = y+x
         x = F.relu(y)
-        
+
         y = self.residual_conv_2(x)
         y = y+x
         y = F.relu(y)
-        
+
         y = self.strided_t_conv_1(y)
         y = self.strided_t_conv_2(y)
-        
+
         return y
 
 class VQAE(nn.Module):
@@ -353,12 +353,12 @@ class VQAE(nn.Module):
         self.encoder = Encoder
         self.codebook = Codebook
         self.decoder = Decoder
-                
+
     def forward(self, x):
         z = self.encoder(x)
         z_quantized, commitment_loss, codebook_loss, perplexity = self.codebook(z)
         x_hat = self.decoder(z_quantized)
-        
+
         return x_hat, z, z_quantized, commitment_loss, codebook_loss, perplexity
 
 class Diffusion:
@@ -380,7 +380,7 @@ class Diffusion:
 
     def prepare_noise_schedule(self):
         return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
-    
+
     def sample_timesteps(self, n):
         return torch.randint(low=1, high=self.noise_steps, size=(n,))
 
@@ -390,7 +390,7 @@ class Diffusion:
         sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
         Ɛ = torch.randn_like(x)
         return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * Ɛ, Ɛ
-    
+
     @torch.inference_mode()
     def sample(self, use_ema, labels, cfg_scale=3):
         model = self.ema_model if use_ema else self.model
@@ -424,7 +424,7 @@ class Diffusion:
         self.scaler.update()
         #self.ema.step_ema(self.ema_model, self.model)
         #self.scheduler.step()
-    
+
     def fast_resize_m1_1(self, x):
         min_values = x.reshape(x.shape[0],-1).min(dim=-1,keepdim=True)[0].unsqueeze(2).unsqueeze(3)
         max_values = x.reshape(x.shape[0],-1).max(dim=-1,keepdim=True)[0].unsqueeze(2).unsqueeze(3)
@@ -453,7 +453,7 @@ class Diffusion:
                     self.train_step(loss)
                     wandb.log({"train_mse": loss.item(),
                                 "learning_rate": self.scheduler.get_last_lr()[0]})
-            pbar.comment = f"MSE={loss.item():2.3f}"        
+            pbar.comment = f"MSE={loss.item():2.3f}"
         return avg_loss.mean().item()
 
     def log_images(self):
@@ -487,20 +487,20 @@ class Diffusion:
         at = wandb.Artifact("model", type="model", description="Model weights for DDPM conditional", metadata={"epoch": epoch})
         at.add_dir(os.path.join("models", run_name))
         wandb.log_artifact(at)
-    
+
     def load_model(self, args):
         # Load model state
         if not args.load_model:
             print("Starting model ftesh...")
             return
-        
+
         model_path = os.path.join("models", args.run_name, f"ckpt.pt")
         if os.path.exists(model_path):
             self.model.load_state_dict(torch.load(model_path))
             print(f"Model loaded successfully from {model_path}")
         else:
             raise FileNotFoundError(f"Model checkpoint not found at {model_path}")
-        
+
         # Load optimizer state
         optim_path = os.path.join("models", args.run_name, f"optim.pt")
         if os.path.exists(optim_path):
@@ -508,14 +508,14 @@ class Diffusion:
             print(f"Optimizer state loaded successfully from {optim_path}")
         else:
             raise FileNotFoundError(f"Optimizer checkpoint not found at {optim_path}")
-        
+
         print("Model loaded successfully")
 
     def prepare(self, args):
         mk_folders(args.run_name)
         self.train_dataloader, self.val_dataloader = get_data(args)
         self.optimizer = optim.AdamW(self.model.parameters(), lr=args.lr, eps=1e-5)
-        self.scheduler = optim.lr_scheduler.OneCycleLR(self.optimizer, max_lr=args.lr, 
+        self.scheduler = optim.lr_scheduler.OneCycleLR(self.optimizer, max_lr=args.lr,
                                                  steps_per_epoch=len(self.train_dataloader), epochs=args.epochs)
         self.mse = nn.MSELoss()
         self.ema = EMA(0.995)
@@ -525,12 +525,12 @@ class Diffusion:
         for epoch in progress_bar(range(args.epochs), total=args.epochs, leave=True):
             logging.info(f"Starting epoch {epoch}:")
             _  = self.one_epoch(train=True)
-            
+
             ## validation
             if args.do_validation:
                 avg_loss = self.one_epoch(train=False)
                 wandb.log({"val_mse": avg_loss})
-            
+
             # log predicitons
             if epoch % args.log_every_epoch == 0 or epoch == args.epochs - 1:
                 self.log_images()
@@ -541,25 +541,25 @@ class Diffusion:
 class DiffusionVAE(Diffusion):
     def __init__(self, noise_steps=1000, beta_start=1e-4, beta_end=0.02, img_size=256, num_classes=10, c_in=1, c_out=1, device=device, vqae_path = 'models/VQAE/ckpt.pt', sav_denoise_path = None, class_names = [], **kwargs):
         super().__init__(noise_steps, beta_start, beta_end, img_size, num_classes, c_in, c_out, device, **kwargs)
-        
+
         input_dim = 1
         hidden_dim = 512
         latent_dim = 4
         n_embeddings= 512
         output_dim = 1
-        
+
         encoder = Encoder(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=latent_dim)
         codebook = VQEmbeddingEMA(n_embeddings=n_embeddings, embedding_dim=latent_dim)
         decoder = Decoder(input_dim=latent_dim, hidden_dim=hidden_dim, output_dim=output_dim)
         self.vqae = VQAE(Encoder=encoder, Codebook=codebook, Decoder=decoder).to(device)
         self.vqae.load_state_dict(torch.load(vqae_path, map_location=device))
         self.vqae.eval()
-        
+
         self.img_size = img_size//4
         self.model = UNet_conditional(latent_dim, latent_dim, num_classes=num_classes, **kwargs).to(device)
-        
+
         self.c_in = latent_dim
-        
+
         self.sav_denoise_path = sav_denoise_path
         self.class_names = class_names
         #self.ema_model = copy.deepcopy(self.model).eval().requires_grad_(False)
@@ -593,10 +593,10 @@ class DiffusionVAE(Diffusion):
                         print(f'saving denoise at step {i}...')
                         x_denoise = x
                         x_denoise = x_denoise.clamp(-1, 1)
-                        
+
                         x_denoise, _, _, _ = self.vqae.codebook(x_denoise)
                         x_denoise_up = vqae.decoder(x_denoise)
-                        
+
                         x_denoise_up = (x_denoise_up + 1) / 2
                         x_denoise_up = (x_denoise_up * 255).type(torch.uint8)
                         x_denoise = (x_denoise + 1) / 2
@@ -606,23 +606,23 @@ class DiffusionVAE(Diffusion):
                                 torch.cat([img_i[0], img_i[1]], dim=1),  # Concatenate first two channels horizontally
                                 torch.cat([img_i[2], img_i[3]], dim=1)   # Concatenate next two channels horizontally
                             ], dim=0)  # Concatenate the two rows vertically
-                            
+
                             # Convert the tensor to a numpy array and map it to viridis color map
                             img_i_grid = plt.cm.viridis(img_i_grid.cpu().numpy() / 255.0)
                             img_i_grid = (img_i_grid * 255).astype(np.uint8)
-                        
+
                             # Convert the numpy array to an image
                             img_i_grid = Image.fromarray(img_i_grid)
-                        
+
                             # Save the image
                             img_i_grid.save(f"{self.sav_denoise_path}/{self.class_names[lab_i]}_noise_{i}_latent.png")
-                            
+
                             img_i_up = plt.cm.viridis(img_i_up.permute(1, 2, 0).cpu().numpy().squeeze())
                             img_i_up = (img_i_up * 255).astype(np.uint8)
                             img_i_up = Image.fromarray(img_i_up)
                             img_i_up.save(f"{self.sav_denoise_path}/{self.class_names[lab_i]}_noise_{i}_decode.png")
-                            
-                            
+
+
         x = x.clamp(-1, 1)
         x, _, _, _ = self.vqae.codebook(x)
         x = vqae.decoder(x)
@@ -651,7 +651,7 @@ class DiffusionVAE(Diffusion):
                     self.train_step(loss)
                     wandb.log({"train_mse": loss.item(),
                                 "learning_rate": self.scheduler.get_last_lr()[0]})
-            pbar.comment = f"MSE={loss.item():2.3f}"        
+            pbar.comment = f"MSE={loss.item():2.3f}"
         return avg_loss.mean().item()
 
     def log_images(self):
@@ -672,7 +672,7 @@ class DiffusionVAE(Diffusion):
         #ema_sampled_images = self.sample(use_ema=True, labels=labels)
         #plot_images(sampled_images)  #to display on jupyter if available
         #wandb.log({"ema_sampled_images": [wandb.Image(img.permute(1,2,0).squeeze().cpu().numpy()) for img in ema_sampled_images]})
-    
+
     def gen_images(self, img_folder, samp_i, labels=None):
         "Log images to wandb and save them to disk"
         class_names = self.class_names
@@ -684,7 +684,7 @@ class DiffusionVAE(Diffusion):
         #    sampled_images.append(self.sample(use_ema=False, labels=labels[i:i+5]))
         #sampled_images = torch.vstack(sampled_images)
         sampled_images = self.sample(use_ema=False, labels=labels)
-        
+
         if self.sav_denoise_path:
             print("not saving image, just noise portions")
             return
@@ -695,4 +695,3 @@ class DiffusionVAE(Diffusion):
             img = (img * 255).astype(np.uint8)
             img = Image.fromarray(img)
             img.save(f"{img_folder}/{class_names[lab]}_gen_imgs_{i}_{samp_i}.png")
-

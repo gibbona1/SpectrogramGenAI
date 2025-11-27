@@ -73,7 +73,7 @@ def get_kaggle_dataset(dataset_path, # Local path to download dataset to
 
 def one_batch(dl):
     return next(iter(dl))
-        
+
 
 def plot_images(images):
     plt.figure(figsize=(32, 32))
@@ -104,25 +104,25 @@ def get_data(args):
         T.ToTensor(),
         T.Normalize((0.5,), (0.5,)),
     ])
-    
+
     class BootstrappedImageFolder(torch.utils.data.Dataset):
         def __init__(self, root, transform=None):
             self.image_folder = ImageFolder(root, transform=transform)
             self.class_to_idx = self.image_folder.class_to_idx
             self.samples = self.image_folder.samples
             self.targets = [s[1] for s in self.samples]
-    
+
             # Organize samples by class
             self.class_samples = defaultdict(list)
             for idx, target in enumerate(self.targets):
                 self.class_samples[target].append(idx)
-    
+
             # Determine the max class size for bootstrapping
             self.max_class_size = max(len(samples) for samples in self.class_samples.values())
-    
+
             # Create bootstrapped indices for each class
             self.bootstrap_indices = self._bootstrap_samples()
-    
+
         def _bootstrap_samples(self):
             indices = []
             for class_id, samples in self.class_samples.items():
@@ -130,10 +130,10 @@ def get_data(args):
                 resampled = np.random.choice(samples, self.max_class_size, replace=True)
                 indices.extend(resampled)
             return indices
-    
+
         def __len__(self):
             return len(self.bootstrap_indices)
-    
+
         def __getitem__(self, idx):
             actual_idx = self.bootstrap_indices[idx]
             return self.image_folder[actual_idx]
@@ -144,7 +144,7 @@ def get_data(args):
 
     #train_dataset = ImageFolder(os.path.join(args.dataset_path, args.train_folder), transform=train_transforms)
     val_dataset = ImageFolder(os.path.join(args.dataset_path, args.val_folder), transform=val_transforms)
-    
+
     if args.slice_size>1:
         train_dataset = torch.utils.data.Subset(train_dataset, indices=range(0, len(train_dataset), args.slice_size))
         val_dataset = torch.utils.data.Subset(val_dataset, indices=range(0, len(val_dataset), args.slice_size))

@@ -35,16 +35,16 @@ def compute_inception_score(image_folder, batch_size=32):
   # Create a dataset from the image folder
   dataset = ImageDataset(image_folder, transform=transform)
   dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-  
+
   # Initialize Inception Score metric
   inception = InceptionScore()
-  
+
   # Iterate over the dataset and update inception metric
   for imgs in tqdm(dataloader):
     #imgs, _ = batch  # We ignore the labels since we're only interested in images
     imgs = imgs.type(torch.uint8)  # Ensure data type is uint8
     inception.update(imgs)
-  
+
   # Compute Inception Score
   score = inception.compute()
   print(f'Inception Score: {score[0].item()} ± {score[1].item()}')
@@ -54,15 +54,15 @@ if __name__ == "__main__":
   if len(sys.argv) != 2:
     print("Usage: python compute_inception_score.py <image_folder>")
     sys.exit(1)
-  
+
   # Get the image folder from the command-line argument
   image_folder = sys.argv[1]
-  
+
   # Check if folder exists
   if not os.path.isdir(image_folder):
     print(f"Error: Folder '{image_folder}' not found.")
     sys.exit(1)
-  
+
   print(f"Computing Inception Score for images in '{image_folder}'")
   # Compute Inception Score with a batch size of 32 (can adjust if needed)
   compute_inception_score(image_folder, batch_size=32)

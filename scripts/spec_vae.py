@@ -55,36 +55,36 @@ def plot_images_torch(original_images, z, z_quantised, reconstructed_images, sav
 
     # Create a figure with a grid of subplots
     fig, axes = plt.subplots(4, num_imgs, figsize=(num_imgs * 4, 4))
-    
+
     for i in range(num_imgs):#batch_size):
         # Squeeze out the channel dimension and plot the original image on the top row
         axes[0, i].imshow(original_images_np[i, 0], cmap='viridis')
         axes[0, i].axis('off')
         axes[0, i].set_title(f'Original {i+1}')
-        
+
         axes[1, i].imshow(z_grid[i], cmap='viridis')
         axes[1, i].axis('off')
         axes[1, i].set_title(f'Z Space {i+1}')
-        
+
         axes[2, i].imshow(z_quantised_grid[i], cmap='viridis')
         axes[2, i].axis('off')
         axes[2, i].set_title(f'Z quantised {i+1}')
-        
+
         # Squeeze out the channel dimension and plot the reconstructed image on the bottom row
         axes[3, i].imshow(reconstructed_images_np[i, 0], cmap='viridis')
         axes[3, i].axis('off')
         axes[3, i].set_title(f'Reconstruction {i+1}')
-    
+
     # Adjust layout
     plt.tight_layout()
-    
+
     # Save the figure
     save_path = os.path.join(sav_folder, f'epoch_{epoch}.png')
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
 
 
-config = SimpleNamespace(    
+config = SimpleNamespace(
     seed = 42,
     batch_size = 10,
     img_size = 256,
@@ -99,14 +99,14 @@ config = SimpleNamespace(
     num_workers=10,
     lr = 5e-3,
     load_model = False)
-    
+
 sav_folder = 'vae_recon'
 model_sav_folder = os.path.join('models', 'VQAE')
 if not os.path.exists(sav_folder):
     os.makedirs(sav_folder)
 if not os.path.exists(model_sav_folder):
     os.makedirs(model_sav_folder)
-    
+
 train_loader, val_loader = get_data(config)
 
 encoder = Encoder(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=latent_dim)
@@ -137,14 +137,14 @@ for epoch in range(epochs):
 
         x_hat, _, _, commitment_loss, codebook_loss, perplexity = model(x)
         recon_loss = mse_loss(x_hat, x)
-        
+
         loss =  recon_loss + commitment_loss * commitment_beta + codebook_loss
-                
+
         loss.backward()
         optimizer.step()
-        
-        if batch_idx % print_step == 0 or batch_idx == len(train_loader) - 1: 
-            print("epoch:", epoch + 1, "Train: (", batch_idx + 1, "/", len(train_loader), ") recon_loss:", recon_loss.item(), " perplexity: ", perplexity.item(), 
+
+        if batch_idx % print_step == 0 or batch_idx == len(train_loader) - 1:
+            print("epoch:", epoch + 1, "Train: (", batch_idx + 1, "/", len(train_loader), ") recon_loss:", recon_loss.item(), " perplexity: ", perplexity.item(),
               " commit_loss: ", commitment_loss.item(), "\n\t codebook loss: ", codebook_loss.item(), " total_loss: ", loss.item(), "\n")
     model.eval()
     overall_loss = 0
@@ -157,7 +157,7 @@ for epoch in range(epochs):
         loss =  recon_loss + commitment_loss * commitment_beta + codebook_loss
         overall_loss += loss.item()
         if batch_idx % print_step == 0 or batch_idx == len(train_loader) - 1:
-            print("epoch:", epoch + 1, "Val: (", batch_idx + 1, "/", len(val_loader), ") recon_loss:", recon_loss.item(), " perplexity: ", perplexity.item(), 
+            print("epoch:", epoch + 1, "Val: (", batch_idx + 1, "/", len(val_loader), ") recon_loss:", recon_loss.item(), " perplexity: ", perplexity.item(),
               " commit_loss: ", commitment_loss.item(), "\n\t codebook loss: ", codebook_loss.item(), " total_loss: ", loss.item(), "\n")
 
 #sve model
