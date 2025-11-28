@@ -8,9 +8,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import wandb
-from diff_utils import get_data, mk_folders
 from fastprogress import progress_bar
 from PIL import Image
+
+from diff_utils import get_data, mk_folders
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

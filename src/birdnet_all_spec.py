@@ -7,14 +7,6 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-batch_size = 16
-
-specdata = np.load("datasets/specdata.npz", allow_pickle=True)
-
-pop_classes = specdata["categories"]
-
-sav_path = "D://Birdnet_all_files_27class_images"
-
 
 class SpecDataset(Dataset):
     """Face Landmarks dataset."""
@@ -70,13 +62,22 @@ class SpecDataset(Dataset):
             return None, None
 
 
-df_filtered = pd.read_csv("C:/Users/Anthony/Downloads/birdnet_df_filtered.csv")
+if __name__ == "__main__":
+    batch_size = 16
 
-loader = DataLoader(
-    dataset=SpecDataset(df_filtered, pop_classes, sav_folder=sav_path),
-    batch_size=batch_size,
-    shuffle=False,
-)
+    specdata = np.load("datasets/specdata.npz", allow_pickle=True)
 
-for i, data in enumerate(loader):
-    print(f"{i}/{len(loader)}")
+    pop_classes = specdata["categories"]
+
+    sav_path = "D://Birdnet_all_files_27class_images"
+
+    df_filtered = pd.read_csv("C:/Users/Anthony/Downloads/birdnet_df_filtered.csv")
+
+    loader = DataLoader(
+        dataset=SpecDataset(df_filtered, pop_classes, sav_folder=sav_path),
+        batch_size=batch_size,
+        shuffle=False,
+    )
+
+    for i, data in enumerate(loader):
+        print(f"{i}/{len(loader)}")

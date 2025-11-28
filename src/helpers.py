@@ -9,8 +9,6 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 import torchmetrics
-from Classifiers import CustomModel, EnsembleModel
-from gan_models import ImageInpaintingModel
 from IPython.display import clear_output
 from PIL import Image
 from sklearn.metrics import classification_report, confusion_matrix
@@ -25,6 +23,9 @@ from torchvision.models import (
     vgg16,
 )
 from tqdm import tqdm
+
+from Classifiers import CustomModel, EnsembleModel
+from gan_models import ImageInpaintingModel
 
 model_name_dict = {"mobilenet": "mobilenet_v2", "vgg": "vgg16", "resnet": "resnet18"}
 
@@ -436,8 +437,7 @@ def eval_model(model, loader, criterion, device, noisered, n_channel, denoise_ne
                 embs = embs.to(device)
             inputs, labels = inputs.to(device), labels.to(device)
             inputs = fast_resize_m1_1(inputs)
-            # if noisered:
-            #    inputs = spec_unet(inputs)[:,1:,:,:]
+
             if noisered:
                 with torch.no_grad():
                     inputs = inputs - denoise_net(inputs)
@@ -523,8 +523,7 @@ def eval_model2(model, loader, criterion, device, noisered, n_channel, denoise_n
         for inputs, labels in loader:
             inputs, labels = inputs.to(device), labels.to(device)
             inputs = fast_resize_m1_1(inputs)
-            # if noisered:
-            #    inputs = spec_unet(inputs)[:,1:,:,:]
+
             if noisered:
                 with torch.no_grad():
                     inputs = inputs - denoise_net(inputs)
@@ -707,20 +706,6 @@ def train_model(model, n_tuple, dfs, d_tuple, num_epochs=10, save_interval=10, b
 
     temperature = 3.0
     alpha = 0.7  # Weight for distillation loss
-
-    class EarlyStopping:
-        def __init__(self, tolerance=3, min_delta=10):
-
-            self.tolerance = tolerance
-            self.min_delta = min_delta
-            self.counter = 0
-            self.early_stop = False
-
-        def __call__(self, train_loss, validation_loss):
-            if (validation_loss - train_loss) > self.min_delta:
-                self.counter += 1
-                if self.counter >= self.tolerance:
-                    self.early_stop = True
 
     if is_cuda:
         model.to(device)
@@ -1267,3 +1252,52 @@ def plot_sep(
 
 def onehot(x, nc):
     return torch.nn.functional.one_hot(x, nc)
+
+
+def redistribute_datasets(train_df, val_df, test_df, pop_classes):
+    # Create copies to avoid modifying original dataframes
+    train_df_new = train_df.copy()
+    val_df_new = val_df.copy()
+    test_df_new = test_df.copy()
+
+    # For each class in pop_classes
+    for class_name in pop_classes:
+        # Count occurrences in test_df
+        class_count = len(test_df_new[test_df_new["common_name"] == class_name])
+
+        if class_count <= 3:
+            # Do nothing if 0-3 samples
+            continue
+
+        elif 4 <= class_count <= 10:
+            # Move 2 to train and 2 to val
+            samples_to_move = test_df_new[test_df_new["common_name"] == class_name].sample(n=4)
+            train_samples = samples_to_move.iloc[:2]
+            val_samples = samples_to_move.iloc[2:]
+
+        elif 11 <= class_count <= 50:
+            # Move 5 to train and 1 to val
+            samples_to_move = test_df_new[test_df_new["common_name"] == class_name].sample(n=6)
+            train_samples = samples_to_move.iloc[:5]
+            val_samples = samples_to_move.iloc[5:]
+
+        elif 51 <= class_count <= 100:
+            # Move 25 to train and 5 to val
+            samples_to_move = test_df_new[test_df_new["common_name"] == class_name].sample(n=30)
+            train_samples = samples_to_move.iloc[:25]
+            val_samples = samples_to_move.iloc[25:]
+
+        elif class_count > 100:
+            # Move 50 to train and 10 to val
+            samples_to_move = test_df_new[test_df_new["common_name"] == class_name].sample(n=60)
+            train_samples = samples_to_move.iloc[:50]
+            val_samples = samples_to_move.iloc[50:]
+
+        # Append samples to train_df and val_df
+        train_df_new = pd.concat([train_df_new, train_samples])
+        val_df_new = pd.concat([val_df_new, val_samples])
+
+        # Remove moved samples from test_df
+        test_df_new = test_df_new.drop(samples_to_move.index)
+    print("redistributed datasets")
+    return train_df_new, val_df_new, test_df_new

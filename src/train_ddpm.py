@@ -11,13 +11,9 @@ from types import SimpleNamespace
 
 import torch
 import wandb
+
 from diff_modules import DiffusionVAE
 from diff_utils import get_cifar, set_seed
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-torch.cuda.empty_cache()
-
 
 config = SimpleNamespace(
     run_name="DDPM_conditional_VAE",
@@ -71,6 +67,10 @@ def parse_args(config):
 
 if __name__ == "__main__":
     parse_args(config)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    torch.cuda.empty_cache()
 
     # seed everything
     set_seed(config.seed)

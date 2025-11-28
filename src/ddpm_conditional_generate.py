@@ -11,6 +11,7 @@ import os
 from types import SimpleNamespace
 
 import torch
+
 from diff_modules import DiffusionVAE
 from diff_utils import set_seed
 
@@ -114,4 +115,4 @@ if __name__ == "__main__":
     for samp_i in range(config.start_idx, config.start_idx + config.num_samples):
         diffuser.gen_images(config.img_folder, samp_i)
 
-print("done!")
+    print("done!")
