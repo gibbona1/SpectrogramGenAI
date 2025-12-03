@@ -24,8 +24,8 @@ from torchvision.models import (
 )
 from tqdm import tqdm
 
-from Classifiers import CustomModel, EnsembleModel
-from gan_models import ImageInpaintingModel
+from .Classifiers import CustomModel, EnsembleModel
+from .gan_models import ImageInpaintingModel
 
 model_name_dict = {"mobilenet": "mobilenet_v2", "vgg": "vgg16", "resnet": "resnet18"}
 

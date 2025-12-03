@@ -1,2 +1,4 @@
 **/*.pyc
 .vscode/
+build/*
+src/spectrogramgenai.egg-info/*
