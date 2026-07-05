@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import wandb
-from fastprogress import progress_bar
 from PIL import Image
+from tqdm import tqdm as progress_bar
 
 from diff_utils import get_data, mk_folders
 
