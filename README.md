@@ -20,12 +20,12 @@ The project includes a new audio dataset of 640 hours of bird calls recorded at 
     cd SpectrogramGenAI
     ```
 
-2. Install dependencies:
+2. Install dependencies with [uv](https://docs.astral.sh/uv/):
     ```bash
-    pip install -r requirements.txt
+    uv sync
     ```
 
-    Ensure you have Python 3.8+.
+    Ensure you have Python 3.11.
 
 ## Usage
 
